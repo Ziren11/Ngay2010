@@ -72,9 +72,6 @@
                 <i class="fa-solid fa-file-import text-indigo-500"></i> Nạp file PDF / JSON
                 <input type="file" accept=".pdf,.json,application/pdf,application/json" onchange="importFromInput(event)" class="hidden">
             </label>
-            <button onclick="restoreBuiltinContent()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 transition flex items-center gap-1.5 shadow-sm" title="Thay nội dung đang hiển thị bằng bản chuẩn đã cập nhật trong file (21 KPI, 36 liên kết)">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Dùng nội dung chuẩn v1.1
-            </button>
             <button id="btn-undo-import" onclick="undoImport()" style="display:none" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-sm" title="Trả lại nội dung như trước khi nạp file">
                 <i class="fa-solid fa-rotate-left"></i> Hoàn tác nạp
             </button>
@@ -126,7 +123,7 @@
                             BẢN ĐỒ CHIẾN LƯỢC TAMATRA 2027
                         </h2>
                         <p class="text-sm text-slate-600 mt-1" contenteditable="true">
-                            Từ tầm nhìn đến hành động – 4 Khía cạnh chiến lược BSC • Lập ngày: 20/10/2026 • Cập nhật: 29/10/2026 (Phiên bản v1.1)
+                            Từ tầm nhìn đến hành động – 4 Khía cạnh chiến lược BSC • Lập ngày: 20/10/2026 • Cập nhật: 29/10/2026 (Phiên bản v1.2)
                         </p>
                     </div>
                     <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 max-w-md">
@@ -281,7 +278,7 @@
                     <i class="fa-solid fa-circle-nodes text-indigo-600 text-sm"></i>
                     <span><strong>Mẹo chỉnh sửa nhanh mối liên hệ:</strong> Sửa trực tiếp mã ở dòng <em>"Dẫn tới: [...]"</em> ở đáy mỗi thẻ (ngăn cách bằng dấu phẩy, vd: <code class="bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono text-[11px]">C4, F2</code>) rồi bấm Enter, hoặc dùng nút <strong>"Chỉnh sửa mối quan hệ"</strong>. Thêm/xóa thẻ bằng cách thêm/xóa dòng trong Từ điển KPI.</span>
                 </div>
-                <button onclick="openLinkManagerModal()" class="shrink-0 px-2.5 py-1 text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
+                <button data-action="open-links" class="shrink-0 px-2.5 py-1 text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
                     Mở bảng điều khiển
                 </button>
             </div>
@@ -342,7 +339,7 @@
                     </h3>
                     <p class="text-xs text-slate-500">Bộ <span id="kpi-count">21</span> KPI trọng tâm theo 4 khía cạnh BSC – mỗi chỉ tiêu có mục tiêu 2027, người phụ trách, nguồn dữ liệu và tần suất đo</p>
                 </div>
-                <button onclick="addKpiRow()" class="no-print px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold flex items-center gap-1 transition">
+                <button data-action="add-kpi" class="no-print px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold flex items-center gap-1 transition">
                     <i class="fa-solid fa-plus"></i> Thêm chỉ tiêu KPI
                 </button>
             </div>
@@ -374,7 +371,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Báo cáo tài chính</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý / Năm</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700" contenteditable="true">Đã chốt</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="F2">
                             <td class="p-2.5 font-bold text-blue-700 kpi-code" contenteditable="true">F2</td>
@@ -386,7 +383,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">ERP – Kế toán</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700" contenteditable="true">Đã chốt</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="F3">
                             <td class="p-2.5 font-bold text-blue-700 kpi-code" contenteditable="true">F3</td>
@@ -398,7 +395,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">ERP – Giá thành</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="F4">
                             <td class="p-2.5 font-bold text-blue-700 kpi-code" contenteditable="true">F4</td>
@@ -410,7 +407,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Mua hàng – Kho</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700" contenteditable="true">(*) Cần số liệu</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="F5">
                             <td class="p-2.5 font-bold text-blue-700 kpi-code" contenteditable="true">F5</td>
@@ -422,7 +419,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">ERP – Công nợ</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700" contenteditable="true">(*) Cần số liệu</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="C1">
                             <td class="p-2.5 font-bold text-teal-700 kpi-code" contenteditable="true">C1</td>
@@ -434,7 +431,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">ERP Kinh doanh</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="C2">
                             <td class="p-2.5 font-bold text-teal-700 kpi-code" contenteditable="true">C2</td>
@@ -446,7 +443,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Báo cáo Kinh doanh</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="C3">
                             <td class="p-2.5 font-bold text-teal-700 kpi-code" contenteditable="true">C3</td>
@@ -458,7 +455,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">R&amp;D – ERP Kinh doanh</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="C4">
                             <td class="p-2.5 font-bold text-teal-700 kpi-code" contenteditable="true">C4</td>
@@ -470,7 +467,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Logistics – Kho</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tuần</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700" contenteditable="true">(*) Cần số liệu</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="C5">
                             <td class="p-2.5 font-bold text-teal-700 kpi-code" contenteditable="true">C5</td>
@@ -482,7 +479,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Khảo sát khách hàng</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">6 tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="P1">
                             <td class="p-2.5 font-bold text-amber-700 kpi-code" contenteditable="true">P1</td>
@@ -494,7 +491,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Báo cáo xưởng / MES</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Ngày</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700" contenteditable="true">Đã chốt</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="P2">
                             <td class="p-2.5 font-bold text-amber-700 kpi-code" contenteditable="true">P2</td>
@@ -506,7 +503,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">ERP Kinh doanh</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="P3">
                             <td class="p-2.5 font-bold text-amber-700 kpi-code" contenteditable="true">P3</td>
@@ -518,7 +515,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Mua hàng</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="P4">
                             <td class="p-2.5 font-bold text-amber-700 kpi-code" contenteditable="true">P4</td>
@@ -530,7 +527,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">QA/QC – HSE</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="P5">
                             <td class="p-2.5 font-bold text-amber-700 kpi-code" contenteditable="true">P5</td>
@@ -542,7 +539,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">ERP – Sản xuất</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tuần</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="P6">
                             <td class="p-2.5 font-bold text-amber-700 kpi-code" contenteditable="true">P6</td>
@@ -554,7 +551,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">ERP Kinh doanh</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="P7">
                             <td class="p-2.5 font-bold text-amber-700 kpi-code" contenteditable="true">P7</td>
@@ -566,7 +563,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">R&amp;D</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="L1">
                             <td class="p-2.5 font-bold text-purple-700 kpi-code" contenteditable="true">L1</td>
@@ -578,7 +575,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Nhân sự</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="L2">
                             <td class="p-2.5 font-bold text-purple-700 kpi-code" contenteditable="true">L2</td>
@@ -590,7 +587,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">IT</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Tháng</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="L3">
                             <td class="p-2.5 font-bold text-purple-700 kpi-code" contenteditable="true">L3</td>
@@ -602,7 +599,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Ban BSC</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                         <tr class="hover:bg-slate-50" data-kpi-code="L4">
                             <td class="p-2.5 font-bold text-purple-700 kpi-code" contenteditable="true">L4</td>
@@ -614,7 +611,7 @@
                             <td class="p-2.5 kpi-source" contenteditable="true">Kỹ thuật – Đầu tư</td>
                             <td class="p-2.5 kpi-freq" contenteditable="true">Quý</td>
                             <td class="p-2.5 kpi-status"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700" contenteditable="true">Đề xuất</span></td>
-                            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
+                            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -757,7 +754,7 @@
                     <div contenteditable="true">
                         <strong>Nguồn dữ liệu:</strong> Dữ liệu thực tế 8 tháng 2026 của Tamatra, số liệu sản xuất và kế hoạch chiến lược phân kỳ 2027.
                     </div>
-                    <div>Phiên bản số hóa: <strong>Tamatra BSC Portal v1.4</strong> • Sẵn sàng xuất bản</div>
+                    <div>Phiên bản số hóa: <strong>Tamatra BSC Portal v1.5</strong> • Sẵn sàng xuất bản</div>
                 </div>
             </div>
         </div>
@@ -1030,7 +1027,7 @@
             <td class="p-2.5 kpi-source" contenteditable="true">Nguồn dữ liệu</td>
             <td class="p-2.5 kpi-freq" contenteditable="true">Hàng tháng</td>
             <td class="p-2.5 kpi-status"><span contenteditable="true"></span></td>
-            <td class="p-2.5 no-print text-center"><button onclick="deleteRow(this)" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>`;
+            <td class="p-2.5 no-print text-center"><button data-action="delete-row" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>`;
         const cell = tr.querySelector('.kpi-code');
         cell.textContent = code || '';
         styleCodeCell(cell, code ? getTierPrefix(code) : null);
@@ -1440,19 +1437,31 @@
         });
 
         root.addEventListener('input', scheduleAutoSave);
+
+        root.addEventListener('click', e => {
+            const btn = e.target.closest && e.target.closest('[data-action]');
+            if (!btn || !root.contains(btn)) return;
+            const act = btn.dataset.action;
+            if (act === 'delete-row') deleteRow(btn);
+            else if (act === 'add-kpi') addKpiRow();
+            else if (act === 'open-links') openLinkManagerModal();
+        });
     }
 
     // ================= LƯU TRỮ =================
     const STORAGE_KEY = 'tamatra_strategy_map_v3';
     const LINKS_STORAGE_KEY = 'tamatra_strategy_links_v3';
     const FONT_STORAGE_KEY = 'tamatra_font_settings';
+    // Đổi giá trị này mỗi khi nội dung trong file HTML được cập nhật -> trình duyệt sẽ hiện nội dung mới của file
+    const CONTENT_VERSION = '2026-10-29-v1.2';
+    const VERSION_STORAGE_KEY = 'tamatra_content_version';
 
     function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
 
     function persist() {
         const html = document.getElementById('export-container').innerHTML;
-        return lsSet(STORAGE_KEY, html) && lsSet(LINKS_STORAGE_KEY, JSON.stringify(causalLinks));
+        return lsSet(STORAGE_KEY, html) && lsSet(LINKS_STORAGE_KEY, JSON.stringify(causalLinks)) && lsSet(VERSION_STORAGE_KEY, CONTENT_VERSION);
     }
 
     let autoSaveTimer = null;
@@ -1480,7 +1489,7 @@
     }
 
     // Làm sạch nội dung trước khi đưa vào trang (file nạp vào có thể đến từ người khác)
-    const ALLOWED_ONCLICK = ['deleteRow(this)', 'openLinkManagerModal()'];
+    const LEGACY_ONCLICK = { 'deleteRow(this)': 'delete-row', 'addKpiRow()': 'add-kpi', 'openLinkManagerModal()': 'open-links' };
     function sanitizeContent(htmlStr) {
         const tpl = document.createElement('template');
         tpl.innerHTML = String(htmlStr || '');
@@ -1489,7 +1498,8 @@
             Array.from(el.attributes).forEach(a => {
                 const n = a.name.toLowerCase(), v = a.value.trim();
                 if (n.startsWith('on')) {
-                    if (!(n === 'onclick' && ALLOWED_ONCLICK.includes(v))) el.removeAttribute(a.name);
+                    if (n === 'onclick' && LEGACY_ONCLICK[v] && !el.dataset.action) el.dataset.action = LEGACY_ONCLICK[v];
+                    el.removeAttribute(a.name);
                 } else if (['href', 'src', 'xlink:href', 'action', 'formaction'].includes(n) && /^\s*javascript:/i.test(v)) {
                     el.removeAttribute(a.name);
                 }
@@ -1524,21 +1534,34 @@
 
     function loadFromStorage() {
         const savedContent = lsGet(STORAGE_KEY);
-        const savedLinks = lsGet(LINKS_STORAGE_KEY);
-        if (savedLinks) { try { causalLinks = JSON.parse(savedLinks); } catch (e) { console.error('Lỗi đọc liên kết đã lưu', e); } }
+        const savedVersion = lsGet(VERSION_STORAGE_KEY);
 
-        if (savedContent) {
-            document.getElementById('export-container').innerHTML = sanitizeContent(savedContent);
+        // Dữ liệu lưu trong trình duyệt chỉ được dùng khi cùng phiên bản với file HTML.
+        // File mới hơn -> hiện nội dung của file, bản cũ được cất làm dự phòng (nút "Hoàn tác nạp").
+        if (savedContent && savedVersion !== CONTENT_VERSION) {
+            lsSet(IMPORT_BACKUP_KEY, JSON.stringify({
+                app: 'tamatra-bsc', savedAt: new Date().toISOString(), content: savedContent,
+                causalLinks: (() => { try { return JSON.parse(lsGet(LINKS_STORAGE_KEY) || '[]'); } catch (e) { return []; } })()
+            }));
             afterContentLoaded();
+            persist();
+            const undo = document.getElementById('btn-undo-import');
+            if (undo) undo.style.display = '';
+            setTimeout(() => showToast('Đã hiển thị nội dung mới trong file HTML. Bản cũ trong trình duyệt được cất dự phòng – bấm "Hoàn tác nạp" nếu cần lấy lại.'), 600);
             return;
         }
-        afterContentLoaded();
 
-        // Máy mới chưa có dữ liệu: thử nạp data.json đặt cạnh file này
-        fetch('data.json')
-            .then(r => { if (!r.ok) throw new Error('no data.json'); return r.json(); })
-            .then(data => { applyLoadedData(data); persist(); showToast('Đã tải dữ liệu từ data.json!'); })
-            .catch(() => {});
+        if (savedContent) {
+            const savedLinks = lsGet(LINKS_STORAGE_KEY);
+            if (savedLinks) { try { causalLinks = JSON.parse(savedLinks); } catch (e) {} }
+            document.getElementById('export-container').innerHTML = sanitizeContent(savedContent);
+        }
+        afterContentLoaded();
+    }
+
+    function resetData() {
+        try { [STORAGE_KEY, LINKS_STORAGE_KEY, VERSION_STORAGE_KEY].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+        location.reload();
     }
 
     function getSnapshotData() {
@@ -1644,19 +1667,6 @@
         showToast(`Đã nạp dữ liệu từ ${isPdf ? 'PDF' : 'JSON'} (xuất lúc ${when}).`);
     }
 
-    // Nội dung chuẩn đi kèm file (trước khi nạp dữ liệu lưu trong trình duyệt / data.json)
-    let BUILTIN_HTML = '';
-    function restoreBuiltinContent() {
-        if (!BUILTIN_HTML) return;
-        if (!confirm('Thay toàn bộ nội dung đang hiển thị bằng nội dung chuẩn v1.1 trong file (21 KPI, 36 liên kết nhân quả)?\n\nNội dung hiện tại được lưu dự phòng, bấm "Hoàn tác nạp" để lấy lại.')) return;
-        lsSet(IMPORT_BACKUP_KEY, JSON.stringify(getSnapshotData()));
-        applyLoadedData({ content: BUILTIN_HTML, causalLinks: JSON.parse(JSON.stringify(defaultCausalLinks)) });
-        persist();
-        const undo = document.getElementById('btn-undo-import');
-        if (undo) undo.style.display = '';
-        showToast('Đã chuyển sang nội dung chuẩn v1.1. Nội dung cũ được giữ dự phòng (nút "Hoàn tác nạp").');
-    }
-
     function undoImport() {
         const b = lsGet(IMPORT_BACKUP_KEY);
         if (!b) { showToast('Không có bản dự phòng để hoàn tác.', true); return; }
@@ -1681,11 +1691,6 @@
             const f = e.dataTransfer.files && e.dataTransfer.files[0];
             if (f) importFile(f);
         });
-    }
-
-    function resetData() {
-        try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(LINKS_STORAGE_KEY); } catch (e) {}
-        location.reload();
     }
 
     // ================= FONT =================
@@ -1928,7 +1933,6 @@
     window.addEventListener('DOMContentLoaded', () => {
         setupDelegation();
         setupFileDrop();
-        BUILTIN_HTML = document.getElementById('export-container').innerHTML;
         loadFontSettings();
         loadFromStorage();
         setTimeout(() => drawCausalArrows(activeHoveredNode), 400);
