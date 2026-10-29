@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -816,6 +816,63 @@
         </div>
     </div>
 
+
+    <!-- MODAL THÊM CHỈ TIÊU KPI -->
+    <div id="kpi-modal" class="no-print fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <form id="kpi-form" class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden" autocomplete="off">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-800">Thêm Chỉ Tiêu KPI Mới</h3>
+                        <p class="text-xs text-slate-500">Dòng mới vào Từ điển KPI và thẻ mới lên Bản đồ chiến lược cùng lúc</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeKpiModal()" class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <label class="block"><span class="font-semibold text-slate-700">Khía cạnh BSC *</span>
+                    <select id="km-tier" class="mt-1 w-full rounded-lg border border-slate-300 p-2 bg-white">
+                        <option value="F">1. Tài chính (F)</option>
+                        <option value="C">2. Khách hàng (C)</option>
+                        <option value="P">3. Quy trình nội bộ (P)</option>
+                        <option value="L">4. Học tập &amp; Phát triển (L)</option>
+                    </select></label>
+                <label class="block"><span class="font-semibold text-slate-700">Mã *</span>
+                    <input id="km-code" class="mt-1 w-full rounded-lg border border-slate-300 p-2 font-mono font-bold uppercase" placeholder="VD: F6">
+                    <span id="km-code-msg" class="text-[11px] text-slate-500">Tự gợi ý mã kế tiếp, có thể sửa</span></label>
+                <label class="block sm:col-span-2"><span class="font-semibold text-slate-700">Mục tiêu chiến lược *</span>
+                    <input id="km-title" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="VD: Tối ưu vốn lưu động"></label>
+                <label class="block sm:col-span-2"><span class="font-semibold text-slate-700">Chỉ số KPI cốt lõi</span>
+                    <input id="km-kpi" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="VD: Vòng quay vốn lưu động (lần/năm)"></label>
+                <label class="block"><span class="font-semibold text-slate-700">Baseline (hiện trạng)</span>
+                    <input id="km-baseline" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="VD: Chưa đo lường (*)"></label>
+                <label class="block"><span class="font-semibold text-slate-700">Mục tiêu 2027</span>
+                    <input id="km-target" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="VD: ≥ 6 lần/năm"></label>
+                <label class="block"><span class="font-semibold text-slate-700">Phụ trách</span>
+                    <input id="km-owner" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="VD: Kế toán trưởng"></label>
+                <label class="block"><span class="font-semibold text-slate-700">Nguồn dữ liệu</span>
+                    <input id="km-source" class="mt-1 w-full rounded-lg border border-slate-300 p-2" placeholder="VD: ERP – Kế toán"></label>
+                <label class="block"><span class="font-semibold text-slate-700">Tần suất</span>
+                    <select id="km-freq" class="mt-1 w-full rounded-lg border border-slate-300 p-2 bg-white">
+                        <option>Ngày</option><option>Tuần</option><option selected>Tháng</option><option>Quý</option><option>6 tháng</option><option>Năm</option>
+                    </select></label>
+                <label class="block"><span class="font-semibold text-slate-700">Tình trạng</span>
+                    <select id="km-status" class="mt-1 w-full rounded-lg border border-slate-300 p-2 bg-white">
+                        <option selected>Đề xuất</option><option>Đã chốt</option><option>(*) Cần số liệu</option>
+                    </select></label>
+                <label class="block sm:col-span-2"><span class="font-semibold text-slate-700">Dẫn tới (mục tiêu được thúc đẩy)</span>
+                    <input id="km-links" class="mt-1 w-full rounded-lg border border-slate-300 p-2 font-mono uppercase" placeholder="VD: F1, F2 – để trống nếu chưa xác định">
+                    <span class="text-[11px] text-slate-500">Nhập các mã đã có trên bản đồ, cách nhau bằng dấu phẩy</span></label>
+                <p id="km-error" class="sm:col-span-2 text-rose-600 font-semibold hidden"></p>
+            </div>
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
+                <button type="button" onclick="closeKpiModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">Hủy</button>
+                <button type="submit" class="px-5 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Thêm chỉ tiêu</button>
+            </div>
+        </form>
+    </div>
+
     <div id="drop-overlay" class="no-print" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(37,99,235,.10);border:3px dashed #2563eb;align-items:center;justify-content:center;pointer-events:none;">
         <div style="background:#fff;border-radius:16px;padding:20px 28px;box-shadow:0 20px 40px rgba(15,23,42,.18);font:600 15px Inter,sans-serif;color:#1e3a8a;">
             <i class="fa-solid fa-file-arrow-down" style="margin-right:8px"></i>Thả file PDF (tải từ trang này) hoặc JSON để nạp dữ liệu
@@ -1377,12 +1434,108 @@
     }
 
     // ================= THÊM / XÓA DÒNG =================
-    function addKpiRow() {
-        const tr = buildRow('', { title: 'Nhập mục tiêu mới', kpi: 'Tên chỉ số KPI', baseline: 'Số liệu hiện tại', target: 'Chỉ tiêu 2027', status: 'Đề xuất' });
+
+    // ================= THÊM KPI QUA HỘP NHẬP LIỆU =================
+    const STATUS_CLASS = {
+        'Đã chốt': 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700',
+        'Đề xuất': 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700',
+        '(*) Cần số liệu': 'px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700'
+    };
+    function usedCodes() {
+        const set = new Set();
+        getRows().forEach(tr => { const c = normCode(tr.dataset.kpiCode) || rowText(tr); if (c) set.add(c); });
+        document.querySelectorAll('.strategy-node').forEach(n => set.add(n.dataset.id));
+        return set;
+    }
+    function suggestCode(tier) {
+        const used = usedCodes();
+        let n = 1;
+        used.forEach(c => { if (c.charAt(0) === tier) n = Math.max(n, (parseInt(c.slice(1), 10) || 0) + 1); });
+        while (used.has(tier + n)) n++;
+        return tier + n;
+    }
+    function kmError(msg) {
+        const el = document.getElementById('km-error');
+        el.textContent = msg || '';
+        el.classList.toggle('hidden', !msg);
+    }
+    function checkKmCode() {
+        const code = normCode(document.getElementById('km-code').value);
+        const msg = document.getElementById('km-code-msg');
+        let err = '';
+        if (!code) err = 'Chưa nhập mã';
+        else if (!isValidCode(code)) err = 'Mã phải là F, C, P hoặc L kèm số (vd: F6)';
+        else if (usedCodes().has(code)) err = `Mã ${code} đã tồn tại`;
+        msg.textContent = err || `Thẻ sẽ nằm ở tầng ${({F:'Tài chính',C:'Khách hàng',P:'Quy trình nội bộ',L:'Học tập & Phát triển'})[code.charAt(0)]}`;
+        msg.className = 'text-[11px] ' + (err ? 'text-rose-600 font-semibold' : 'text-emerald-600');
+        return err;
+    }
+    function openKpiModal(tier) {
+        const form = document.getElementById('kpi-form');
+        form.reset();
+        kmError('');
+        const t = TIERS.includes(tier) ? tier : 'F';
+        document.getElementById('km-tier').value = t;
+        document.getElementById('km-code').value = suggestCode(t);
+        checkKmCode();
+        document.getElementById('kpi-modal').classList.remove('hidden');
+        setTimeout(() => document.getElementById('km-title').focus(), 50);
+    }
+    function closeKpiModal() { document.getElementById('kpi-modal').classList.add('hidden'); }
+    function addKpiRow() { openKpiModal(); } // tên cũ, giữ để tương thích
+
+    function submitKpiModal(e) {
+        e.preventDefault();
+        const v = id => document.getElementById(id).value.trim();
+        const code = normCode(v('km-code'));
+        const codeErr = checkKmCode();
+        if (codeErr) { kmError(codeErr); document.getElementById('km-code').focus(); return; }
+        if (!v('km-title')) { kmError('Vui lòng nhập tên Mục tiêu chiến lược'); document.getElementById('km-title').focus(); return; }
+
+        const tokens = v('km-links').toUpperCase().split(/[,\s;/]+/).filter(Boolean);
+        const bad = tokens.filter(t => t !== code && !getNode(t));
+        if (bad.length) { kmError('Mã "Dẫn tới" chưa có trên bản đồ: ' + bad.join(', ')); document.getElementById('km-links').focus(); return; }
+
+        const status = v('km-status') || 'Đề xuất';
+        const tr = buildRow(code, {
+            title: v('km-title'),
+            kpi: v('km-kpi') || 'Chưa xác định KPI',
+            baseline: v('km-baseline') || 'Chưa có số liệu (*)',
+            target: v('km-target') || 'Chưa đặt chỉ tiêu',
+            status, statusClass: STATUS_CLASS[status]
+        });
+        tr.querySelector('.kpi-owner').textContent = v('km-owner') || 'Chưa phân công';
+        tr.querySelector('.kpi-source').textContent = v('km-source') || 'Chưa xác định';
+        tr.querySelector('.kpi-freq').textContent = v('km-freq') || 'Tháng';
         document.querySelector('#kpi-table tbody').appendChild(tr);
-        const cell = tr.querySelector('.kpi-code');
-        cell.focus();
-        showToast('Đã thêm dòng KPI mới. Nhập Mã (vd: F4, C5, P5, L6) rồi bấm Enter để tạo thẻ trên bản đồ.');
+
+        const node = upsertNodeFromRow(tr);
+        tokens.filter(t => t !== code).forEach(t => { if (!causalLinks.some(l => l.from === code && l.to === t)) causalLinks.push({ from: code, to: t }); });
+        sortKpiTable();
+        sortStrategyMap();
+        afterChange();
+        persist();
+        closeKpiModal();
+
+        // Làm nổi bật dòng và thẻ vừa thêm
+        tr.style.transition = 'background-color 1.5s';
+        tr.style.backgroundColor = '#dcfce7';
+        setTimeout(() => { tr.style.backgroundColor = ''; }, 2500);
+        tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        flash(node);
+        showToast(`Đã thêm ${code} vào Từ điển KPI và Bản đồ chiến lược.`);
+    }
+
+    function setupKpiModal() {
+        document.getElementById('kpi-form').addEventListener('submit', submitKpiModal);
+        document.getElementById('km-tier').addEventListener('change', e => { document.getElementById('km-code').value = suggestCode(e.target.value); checkKmCode(); });
+        document.getElementById('km-code').addEventListener('input', () => {
+            const c = normCode(document.getElementById('km-code').value);
+            if (TIERS.includes(c.charAt(0))) document.getElementById('km-tier').value = c.charAt(0);
+            checkKmCode();
+        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('kpi-modal').classList.contains('hidden')) closeKpiModal(); });
+        document.getElementById('kpi-modal').addEventListener('mousedown', e => { if (e.target.id === 'kpi-modal') closeKpiModal(); });
     }
 
     function deleteRow(btn) {
@@ -1443,7 +1596,7 @@
             if (!btn || !root.contains(btn)) return;
             const act = btn.dataset.action;
             if (act === 'delete-row') deleteRow(btn);
-            else if (act === 'add-kpi') addKpiRow();
+            else if (act === 'add-kpi') openKpiModal();
             else if (act === 'open-links') openLinkManagerModal();
         });
     }
@@ -1453,7 +1606,7 @@
     const LINKS_STORAGE_KEY = 'tamatra_strategy_links_v3';
     const FONT_STORAGE_KEY = 'tamatra_font_settings';
     // Đổi giá trị này mỗi khi nội dung trong file HTML được cập nhật -> trình duyệt sẽ hiện nội dung mới của file
-    const CONTENT_VERSION = '2026-10-29-v1.2';
+    const CONTENT_VERSION = '2026-10-29-v1.2';  // giữ nguyên: nội dung không đổi so với v1.2
     const VERSION_STORAGE_KEY = 'tamatra_content_version';
 
     function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -1933,6 +2086,7 @@
     window.addEventListener('DOMContentLoaded', () => {
         setupDelegation();
         setupFileDrop();
+        setupKpiModal();
         loadFontSettings();
         loadFromStorage();
         setTimeout(() => drawCausalArrows(activeHoveredNode), 400);
