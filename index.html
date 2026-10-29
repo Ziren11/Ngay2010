@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -68,10 +68,16 @@
             <button onclick="exportJSON()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-indigo-300 text-indigo-600 bg-white hover:bg-indigo-50 transition flex items-center gap-1.5 shadow-sm" title="Tải dữ liệu ra file JSON để dùng trên máy khác">
                 <i class="fa-solid fa-file-export text-indigo-500"></i> Xuất JSON
             </button>
-            <label title="Tải file JSON đã lưu để khôi phục dữ liệu" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-indigo-300 text-indigo-600 bg-white hover:bg-indigo-50 transition flex items-center gap-1.5 shadow-sm cursor-pointer">
-                <i class="fa-solid fa-file-import text-indigo-500"></i> Nhập JSON
-                <input type="file" accept=".json" onchange="importJSON(event)" class="hidden">
+            <label title="Nạp lại dữ liệu từ file PDF đã tải bằng nút 'Tải PDF' (hoặc file JSON). Có thể kéo-thả file vào trang." class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-indigo-300 text-indigo-600 bg-white hover:bg-indigo-50 transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                <i class="fa-solid fa-file-import text-indigo-500"></i> Nạp file PDF / JSON
+                <input type="file" accept=".pdf,.json,application/pdf,application/json" onchange="importFromInput(event)" class="hidden">
             </label>
+            <button onclick="restoreBuiltinContent()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 transition flex items-center gap-1.5 shadow-sm" title="Thay nội dung đang hiển thị bằng bản chuẩn đã cập nhật trong file (21 KPI, 36 liên kết)">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Dùng nội dung chuẩn v1.1
+            </button>
+            <button id="btn-undo-import" onclick="undoImport()" style="display:none" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-sm" title="Trả lại nội dung như trước khi nạp file">
+                <i class="fa-solid fa-rotate-left"></i> Hoàn tác nạp
+            </button>
             <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
                 <i class="fa-solid fa-font text-slate-500 text-xs"></i>
                 <select id="font-family-select" onchange="onFontChange()" class="text-xs text-slate-700 bg-transparent border-none outline-none cursor-pointer" title="Chọn phông chữ">
@@ -813,9 +819,15 @@
         </div>
     </div>
 
+    <div id="drop-overlay" class="no-print" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(37,99,235,.10);border:3px dashed #2563eb;align-items:center;justify-content:center;pointer-events:none;">
+        <div style="background:#fff;border-radius:16px;padding:20px 28px;box-shadow:0 20px 40px rgba(15,23,42,.18);font:600 15px Inter,sans-serif;color:#1e3a8a;">
+            <i class="fa-solid fa-file-arrow-down" style="margin-right:8px"></i>Thả file PDF (tải từ trang này) hoặc JSON để nạp dữ liệu
+        </div>
+    </div>
+
     <div id="toast" class="no-print fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 z-50 translate-y-20 opacity-0">
         <i class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-msg"></span>
+        <span id="toast-msg" style="max-width:520px;line-height:1.45"></span>
     </div>
 
     <script>
@@ -1467,10 +1479,42 @@
         fullSync({ silent: true });
     }
 
+    // Làm sạch nội dung trước khi đưa vào trang (file nạp vào có thể đến từ người khác)
+    const ALLOWED_ONCLICK = ['deleteRow(this)', 'openLinkManagerModal()'];
+    function sanitizeContent(htmlStr) {
+        const tpl = document.createElement('template');
+        tpl.innerHTML = String(htmlStr || '');
+        tpl.content.querySelectorAll('script,iframe,object,embed,link,meta,base,form').forEach(n => n.remove());
+        tpl.content.querySelectorAll('*').forEach(el => {
+            Array.from(el.attributes).forEach(a => {
+                const n = a.name.toLowerCase(), v = a.value.trim();
+                if (n.startsWith('on')) {
+                    if (!(n === 'onclick' && ALLOWED_ONCLICK.includes(v))) el.removeAttribute(a.name);
+                } else if (['href', 'src', 'xlink:href', 'action', 'formaction'].includes(n) && /^\s*javascript:/i.test(v)) {
+                    el.removeAttribute(a.name);
+                }
+            });
+        });
+        return tpl.innerHTML;
+    }
+
+    function isValidSnapshot(data) {
+        return data && typeof data.content === 'string'
+            && data.content.includes('kpi-table') && data.content.includes('strategy-map-box');
+    }
+
+    function cleanLinks(arr) {
+        if (!Array.isArray(arr)) return null;
+        return arr.filter(l => l && typeof l.from === 'string' && typeof l.to === 'string')
+            .map(l => ({ from: normCode(l.from), to: normCode(l.to) }))
+            .filter(l => isValidCode(l.from) && isValidCode(l.to));
+    }
+
     function applyLoadedData(data) {
-        if (data.content) document.getElementById('export-container').innerHTML = data.content;
-        if (Array.isArray(data.causalLinks)) causalLinks = data.causalLinks;
-        if (data.fontSettings) {
+        if (data.content) document.getElementById('export-container').innerHTML = sanitizeContent(data.content);
+        const links = cleanLinks(data.causalLinks);
+        if (links) causalLinks = links;
+        if (data.fontSettings && typeof data.fontSettings === 'object') {
             applyFontSettings(data.fontSettings.fontFamily, data.fontSettings.fontSize);
             saveFontSettings(data.fontSettings.fontFamily, data.fontSettings.fontSize);
             syncFontSelects(data.fontSettings.fontFamily, data.fontSettings.fontSize);
@@ -1484,7 +1528,7 @@
         if (savedLinks) { try { causalLinks = JSON.parse(savedLinks); } catch (e) { console.error('Lỗi đọc liên kết đã lưu', e); } }
 
         if (savedContent) {
-            document.getElementById('export-container').innerHTML = savedContent;
+            document.getElementById('export-container').innerHTML = sanitizeContent(savedContent);
             afterContentLoaded();
             return;
         }
@@ -1497,15 +1541,20 @@
             .catch(() => {});
     }
 
-    function exportJSON() {
-        const data = {
+    function getSnapshotData() {
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        return {
+            app: 'tamatra-bsc',
             version: 3,
             savedAt: new Date().toISOString(),
             content: document.getElementById('export-container').innerHTML,
             causalLinks,
             fontSettings: JSON.parse(lsGet(FONT_STORAGE_KEY) || 'null')
         };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    }
+
+    function exportJSON() {
+        const blob = new Blob([JSON.stringify(getSnapshotData(), null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -1515,23 +1564,123 @@
         showToast('Đã xuất file JSON thành công!');
     }
 
-    function importJSON(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            try {
-                const data = JSON.parse(e.target.result);
-                if (!data.content) throw new Error('File không hợp lệ');
-                applyLoadedData(data);
-                persist();
-                showToast('Đã nhập dữ liệu từ file JSON thành công!');
-            } catch (err) {
-                showToast('Lỗi: File JSON không hợp lệ hoặc bị hỏng!', true);
+    // ---- Nhúng / đọc dữ liệu trong file PDF ----
+    // Khi "Tải PDF", toàn bộ dữ liệu trang (nén gzip, mã hóa base64) được ghi vào
+    // trường Keywords của PDF. Khi nạp PDF, trang tìm lại đoạn dữ liệu này.
+    const PDF_DATA_TAG = 'TAMATRA-BSC-DATA';
+    function bytesToB64(u8) {
+        let s = '';
+        for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+        return btoa(s);
+    }
+    function b64ToBytes(b64) {
+        const s = atob(b64), u = new Uint8Array(s.length);
+        for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+        return u;
+    }
+    async function streamThrough(u8, transform) {
+        return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(transform)).arrayBuffer());
+    }
+    async function encodeSnapshotForPdf() {
+        const raw = new TextEncoder().encode(JSON.stringify(getSnapshotData()));
+        if (window.CompressionStream) {
+            try { return `${PDF_DATA_TAG}:1:z:${bytesToB64(await streamThrough(raw, new CompressionStream('gzip')))}:END`; } catch (e) {}
+        }
+        return `${PDF_DATA_TAG}:1:p:${bytesToB64(raw)}:END`;
+    }
+    async function decodeSnapshotFromPdf(buffer) {
+        const text = new TextDecoder('latin1').decode(new Uint8Array(buffer));
+        const m = text.match(/TAMATRA-BSC-DATA:1:([zp]):([A-Za-z0-9+\/=\s\\]+?):END/);
+        if (!m) return null;
+        let bytes = b64ToBytes(m[2].replace(/[\s\\]/g, ''));
+        if (m[1] === 'z') {
+            if (!window.DecompressionStream) throw new Error('Trình duyệt quá cũ, không giải nén được dữ liệu. Hãy dùng Chrome/Edge bản mới.');
+            bytes = await streamThrough(bytes, new DecompressionStream('gzip'));
+        }
+        return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    }
+
+    // ---- Nạp file (PDF hoặc JSON) ----
+    const IMPORT_BACKUP_KEY = 'tamatra_backup_before_import';
+    function importFromInput(event) {
+        const file = event.target.files && event.target.files[0];
+        event.target.value = '';
+        if (file) importFile(file);
+    }
+    function importJSON(event) { importFromInput(event); } // tương thích tên cũ
+
+    async function importFile(file) {
+        const name = (file.name || '').toLowerCase();
+        const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf';
+        const isJson = name.endsWith('.json') || file.type === 'application/json';
+        if (!isPdf && !isJson) { showToast('Chỉ nạp được file .pdf (tải từ trang này) hoặc .json.', true); return; }
+        let data = null;
+        try {
+            if (isPdf) {
+                data = await decodeSnapshotFromPdf(await file.arrayBuffer());
+                if (!data) {
+                    showToast('File PDF này không chứa dữ liệu để nạp. Chỉ nạp được PDF tải bằng nút "Tải PDF" của phiên bản này; PDF cũ hoặc PDF in qua máy in ảo / đã chỉnh sửa bằng phần mềm khác sẽ không còn dữ liệu.', true);
+                    return;
+                }
+            } else {
+                data = JSON.parse(await file.text());
             }
-            event.target.value = '';
-        };
-        reader.readAsText(file);
+        } catch (err) {
+            console.error(err);
+            showToast('Không đọc được file: ' + (err.message || 'file bị hỏng hoặc không đúng định dạng.'), true);
+            return;
+        }
+        if (!isValidSnapshot(data)) { showToast('File không phải dữ liệu Bản đồ chiến lược Tamatra.', true); return; }
+
+        const when = data.savedAt ? new Date(data.savedAt).toLocaleString('vi-VN') : 'không rõ thời điểm';
+        const count = (data.content.match(/data-kpi-code="[FCPL]\d+"/g) || []).length;
+        if (!confirm(`Nạp dữ liệu từ "${file.name}"?\n\n• Xuất lúc: ${when}\n• Số chỉ tiêu KPI: ${count}\n\nNội dung hiện tại sẽ được thay thế (có lưu bản dự phòng, bấm "Hoàn tác nạp" để lấy lại).`)) return;
+
+        lsSet(IMPORT_BACKUP_KEY, JSON.stringify(getSnapshotData()));
+        applyLoadedData(data);
+        persist();
+        const undo = document.getElementById('btn-undo-import');
+        if (undo) undo.style.display = '';
+        showToast(`Đã nạp dữ liệu từ ${isPdf ? 'PDF' : 'JSON'} (xuất lúc ${when}).`);
+    }
+
+    // Nội dung chuẩn đi kèm file (trước khi nạp dữ liệu lưu trong trình duyệt / data.json)
+    let BUILTIN_HTML = '';
+    function restoreBuiltinContent() {
+        if (!BUILTIN_HTML) return;
+        if (!confirm('Thay toàn bộ nội dung đang hiển thị bằng nội dung chuẩn v1.1 trong file (21 KPI, 36 liên kết nhân quả)?\n\nNội dung hiện tại được lưu dự phòng, bấm "Hoàn tác nạp" để lấy lại.')) return;
+        lsSet(IMPORT_BACKUP_KEY, JSON.stringify(getSnapshotData()));
+        applyLoadedData({ content: BUILTIN_HTML, causalLinks: JSON.parse(JSON.stringify(defaultCausalLinks)) });
+        persist();
+        const undo = document.getElementById('btn-undo-import');
+        if (undo) undo.style.display = '';
+        showToast('Đã chuyển sang nội dung chuẩn v1.1. Nội dung cũ được giữ dự phòng (nút "Hoàn tác nạp").');
+    }
+
+    function undoImport() {
+        const b = lsGet(IMPORT_BACKUP_KEY);
+        if (!b) { showToast('Không có bản dự phòng để hoàn tác.', true); return; }
+        try { applyLoadedData(JSON.parse(b)); } catch (e) { showToast('Bản dự phòng bị hỏng.', true); return; }
+        persist();
+        try { localStorage.removeItem(IMPORT_BACKUP_KEY); } catch (e) {}
+        document.getElementById('btn-undo-import').style.display = 'none';
+        showToast('Đã hoàn tác, trả lại nội dung trước khi nạp.');
+    }
+
+    // Kéo - thả file vào trang
+    function setupFileDrop() {
+        const ov = document.getElementById('drop-overlay');
+        let depth = 0;
+        const hasFiles = e => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+        window.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); depth++; ov.style.display = 'flex'; });
+        window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+        window.addEventListener('dragleave', e => { if (!hasFiles(e)) return; depth = Math.max(0, depth - 1); if (!depth) ov.style.display = 'none'; });
+        window.addEventListener('drop', e => {
+            if (!hasFiles(e)) return;
+            e.preventDefault(); depth = 0; ov.style.display = 'none';
+            const f = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f) importFile(f);
+        });
     }
 
     function resetData() {
@@ -1577,7 +1726,7 @@
         toastTimer = setTimeout(() => {
             toast.classList.remove('translate-y-0', 'opacity-100');
             toast.classList.add('translate-y-20', 'opacity-0');
-        }, 3500);
+        }, Math.min(9000, 3000 + msg.length * 35));
     }
 
     // ================= PDF / IN =================
@@ -1697,7 +1846,7 @@
 
     async function buildPdfDoc() {
         if (!window.html2canvas || !window.jspdf) throw new Error('Chưa tải được thư viện tạo PDF (cần kết nối Internet)');
-        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        const payload = await encodeSnapshotForPdf();   // chụp dữ liệu trước khi dựng trang in
         const prevScroll = window.scrollY;
         showPdfBusy(true);
         const stage = document.createElement('div');
@@ -1721,6 +1870,7 @@
 
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+            pdf.setProperties({ title: 'Ban do chien luoc Tamatra BSC 2027', subject: 'Tamatra BSC 2027', creator: 'Tamatra BSC Portal', keywords: payload });
             const W = PDF_CFG.pageW - 2 * PDF_CFG.margin, H = PDF_CFG.pageH - 2 * PDF_CFG.margin - PDF_CFG.footer;
             for (let i = 0; i < pages.length; i++) {
                 const pg = pages[i];
@@ -1747,7 +1897,7 @@
         try {
             const pdf = await buildPdfDoc();
             pdf.save('Tamatra_Ban_do_chien_luoc_BSC_2027.pdf');
-            showToast('Đã tải PDF thành công!');
+            showToast('Đã tải PDF thành công! File này có kèm dữ liệu, có thể nạp lại vào trang bằng nút "Nạp file PDF / JSON".');
         } catch (err) {
             console.error(err);
             showToast('Không tạo được PDF: ' + (err.message || err), true);
@@ -1777,6 +1927,8 @@
     window.addEventListener('resize', () => drawCausalArrows(activeHoveredNode));
     window.addEventListener('DOMContentLoaded', () => {
         setupDelegation();
+        setupFileDrop();
+        BUILTIN_HTML = document.getElementById('export-container').innerHTML;
         loadFontSettings();
         loadFromStorage();
         setTimeout(() => drawCausalArrows(activeHoveredNode), 400);
