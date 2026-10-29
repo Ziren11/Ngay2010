@@ -5,7 +5,8 @@
     <title>Bản Đồ Chiến Lược Tamatra 2027 (Interactive &amp; Editable)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&display=swap');
@@ -14,6 +15,7 @@
         [contenteditable="true"] { outline: none; transition: all 0.2s; border-radius: 4px; }
         [contenteditable="true"]:hover { background-color: rgba(59, 130, 246, 0.08); box-shadow: inset 0 0 0 1px #93c5fd; }
         [contenteditable="true"]:focus { background-color: #ffffff; box-shadow: inset 0 0 0 2px #2563eb; color: #0f172a; }
+        .kpi-status span { white-space: nowrap; }
         .kpi-code:empty::before { content: 'Nhập mã...'; color: #94a3b8; font-weight: 400; }
 
         #connector-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
@@ -22,7 +24,9 @@
         .node-flash { animation: nodeflash 1.2s ease-out; }
         @keyframes nodeflash { 0% { box-shadow: 0 0 0 4px rgba(16,185,129,.6); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
 
+        @page { size: A4 landscape; margin: 8mm; }
         @media print {
+            .strategy-node, tr { break-inside: avoid; }
             .no-print { display: none !important; }
             body { background: white !important; padding: 0 !important; }
             .page-break { page-break-before: always; }
@@ -90,7 +94,7 @@
             <button onclick="downloadPDF()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 transition flex items-center gap-2">
                 <i class="fa-solid fa-file-pdf text-sm"></i> Tải PDF Chiến Lược
             </button>
-            <button onclick="window.print()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-900 text-white transition flex items-center gap-1.5">
+            <button onclick="printPDF()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-900 text-white transition flex items-center gap-1.5">
                 <i class="fa-solid fa-print"></i> In A4
             </button>
         </div>
@@ -1264,31 +1268,41 @@
     }
 
     // ================= VẼ MŨI TÊN =================
+    function renderArrows(box, svg, find, highlightNodeId, showAll, idp, endGap = 0) {
+        const cr = box.getBoundingClientRect();
+        svg.setAttribute('viewBox', `0 0 ${cr.width} ${cr.height}`);
+        svg.setAttribute('width', cr.width);
+        svg.setAttribute('height', cr.height);
+        svg.innerHTML = `<defs>
+            <marker id="${idp}-arrow-default" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8"/></marker>
+            <marker id="${idp}-arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/></marker>
+        </defs>`;
+        causalLinks.forEach(link => {
+            const a = find(link.from), b = find(link.to);
+            if (!a || !b) return;
+            const isOn = highlightNodeId && (link.from === highlightNodeId || link.to === highlightNodeId);
+            if (!isOn && !showAll) return;
+            const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+            const sx = (ra.left + ra.right) / 2 - cr.left, sy = ra.top - cr.top;
+            const ex = (rb.left + rb.right) / 2 - cr.left, ey = rb.bottom - cr.top + endGap;
+            const dy = ey - sy;
+            const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            p.setAttribute('d', `M ${sx} ${sy} C ${sx} ${sy + dy * 0.5}, ${ex} ${ey - dy * 0.5}, ${ex} ${ey}`);
+            p.setAttribute('class', isOn ? 'causal-path active' : 'causal-path');
+            p.setAttribute('fill', 'none');
+            p.setAttribute('stroke', isOn ? '#2563eb' : '#94a3b8');
+            p.setAttribute('stroke-width', isOn ? '3.5' : '1.8');
+            if (!isOn) p.setAttribute('stroke-dasharray', '4 3');
+            p.setAttribute('marker-end', `url(#${idp}-arrow-${isOn ? 'active' : 'default'})`);
+            svg.appendChild(p);
+        });
+    }
+
     function drawCausalArrows(highlightNodeId = null) {
         const svg = document.getElementById('connector-canvas');
         const box = document.getElementById('strategy-map-box');
         if (!svg || !box) return;
-        const cr = box.getBoundingClientRect();
-        svg.setAttribute('viewBox', `0 0 ${cr.width} ${cr.height}`);
-        svg.innerHTML = `<defs>
-            <marker id="arrow-default" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8"/></marker>
-            <marker id="arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/></marker>
-        </defs>`;
-        causalLinks.forEach(link => {
-            const a = getNode(link.from), b = getNode(link.to);
-            if (!a || !b) return;
-            const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-            const sx = (ra.left + ra.right) / 2 - cr.left, sy = ra.top - cr.top;
-            const ex = (rb.left + rb.right) / 2 - cr.left, ey = rb.bottom - cr.top;
-            const dy = ey - sy;
-            const isOn = highlightNodeId && (link.from === highlightNodeId || link.to === highlightNodeId);
-            if (!isOn && !showAllArrows) return;
-            const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            p.setAttribute('d', `M ${sx} ${sy} C ${sx} ${sy + dy * 0.5}, ${ex} ${ey - dy * 0.5}, ${ex} ${ey}`);
-            p.setAttribute('class', isOn ? 'causal-path active' : 'causal-path');
-            p.setAttribute('marker-end', isOn ? 'url(#arrow-active)' : 'url(#arrow-default)');
-            svg.appendChild(p);
-        });
+        renderArrows(box, svg, getNode, highlightNodeId, showAllArrows, 'm');
     }
 
     function toggleArrowMode() {
@@ -1567,26 +1581,194 @@
     }
 
     // ================= PDF / IN =================
-    function withAllArrows(fn) {
-        const prev = showAllArrows;
-        showAllArrows = true; drawCausalArrows();
-        return Promise.resolve(fn()).finally(() => { showAllArrows = prev; drawCausalArrows(activeHoveredNode); });
+    /* Mỗi trang A4 được dựng riêng trong một "sân khấu" ẩn với chiều rộng cố định,
+       rồi chụp từng trang -> không còn trang trắng, không cắt ngang thẻ/bảng,
+       bản đồ được thu gọn để vừa 1 trang và vẽ đủ mũi tên. */
+    const PDF_CFG = { pageW: 297, pageH: 210, margin: 8, footer: 6, renderW: 1280 };
+    const PDF_SOFT = 1.15; // cho phép thu nhỏ tối đa ~13% trước khi tách sang trang mới
+    function pdfPxLimit() {
+        const w = PDF_CFG.pageW - 2 * PDF_CFG.margin, h = PDF_CFG.pageH - 2 * PDF_CFG.margin - PDF_CFG.footer;
+        return Math.floor(PDF_CFG.renderW * h / w);
     }
-    function downloadPDF() {
-        showToast('Đang tạo file PDF chất lượng cao...');
-        const element = document.getElementById('export-container');
-        const opt = {
-            margin: [8, 8, 8, 8],
-            filename: 'Tamatra_Ban_do_chien_luoc_2027.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+
+    function cleanClone(el) {
+        const c = el.cloneNode(true);
+        c.querySelectorAll('.no-print').forEach(n => n.remove());
+        [c, ...c.querySelectorAll('*')].forEach(n => {
+            n.removeAttribute('contenteditable');
+            if (n.id) { n.setAttribute('data-src-id', n.id); n.removeAttribute('id'); }
+            if (n.classList && n.classList.contains('list-inside')) { n.classList.remove('list-inside'); n.style.paddingLeft = '18px'; }
+            if (n.classList) n.classList.remove('ring-2', 'ring-blue-500', 'node-flash', 'page-break', 'shadow-sm', 'shadow-md', 'shadow-lg');
+        });
+        return c;
+    }
+
+    function newPdfPage(stage) {
+        const p = document.createElement('div');
+        p.className = 'pdf-page';
+        p.style.cssText = `width:${PDF_CFG.renderW}px;box-sizing:border-box;background:#fff;margin:0 0 40px 0;`;
+        stage.appendChild(p);
+        return p;
+    }
+
+    function buildMapPage(stage, sec) {
+        const c = cleanClone(sec);
+        const box = c.querySelector('[data-src-id="strategy-map-box"]');
+        box.classList.remove('space-y-6');
+        box.style.padding = '14px 16px';
+        Array.from(box.children).forEach((tier, k) => { if (tier.tagName !== 'svg' && k > 1) tier.style.marginTop = '18px'; });
+        TIERS.forEach(t => {
+            const g = c.querySelector(`[data-src-id="grid-tier-${t}"]`);
+            if (!g) return;
+            const n = g.children.length;
+            g.className = '';
+            g.style.cssText = `display:grid;grid-template-columns:repeat(${Math.max(4, n)},minmax(0,1fr));gap:10px;`;
+            g.querySelectorAll('.strategy-node').forEach(card => {
+                card.querySelector('.node-kpi')?.closest('p')?.remove();
+                card.querySelector('.node-baseline')?.closest('p')?.remove();
+                card.querySelector('.target-list')?.closest('div')?.remove();
+                card.classList.remove('transition-all');
+                card.style.padding = '9px 10px';
+            });
+        });
+        const svg = c.querySelector('[data-src-id="connector-canvas"]');
+        svg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible;';
+        Array.from(box.children).forEach(tier => { const hd = tier.firstElementChild; if (tier.tagName !== 'svg' && hd) { hd.style.cssText += 'display:flex;width:max-content;background:#f8fafc;padding:2px 10px 2px 2px;border-radius:8px;position:relative;z-index:5;'; } });
+        const page = newPdfPage(stage);
+        page.appendChild(c);
+        page._arrows = () => renderArrows(box, svg, code => box.querySelector(`.strategy-node[data-id="${code}"]`), null, true, 'pdf', 7);
+        return page;
+    }
+
+    function buildKpiPages(stage, sec, pages) {
+        const c = cleanClone(sec);
+        const header = c.children[0];
+        const table = c.querySelector('table');
+        const roadmap = c.children[c.children.length - 1];
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const theadHTML = table.querySelector('thead').outerHTML;
+        const tbodyClass = table.querySelector('tbody').className;
+        const limit = pdfPxLimit() * PDF_SOFT;
+        let page, shell, tbody, part = 0;
+
+        const start = () => {
+            part++;
+            page = newPdfPage(stage);
+            shell = c.cloneNode(false);
+            const h = header.cloneNode(true);
+            if (part > 1) { const t = h.querySelector('h3'); if (t) t.append(' (tiếp theo)'); }
+            shell.appendChild(h);
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `<table class="${table.className}">${theadHTML}<tbody class="${tbodyClass}"></tbody></table>`;
+            shell.appendChild(wrap);
+            page.appendChild(shell);
+            tbody = wrap.querySelector('tbody');
+            pages.push(page);
         };
-        withAllArrows(() => html2pdf().set(opt).from(element).save())
-            .then(() => showToast('Tải PDF thành công!'))
-            .catch(err => { console.error(err); window.print(); });
+        start();
+        rows.forEach(r => {
+            tbody.appendChild(r);
+            if (page.offsetHeight > limit && tbody.children.length > 1) { r.remove(); start(); tbody.appendChild(r); }
+        });
+        roadmap.style.marginTop = '24px';
+        shell.appendChild(roadmap);
+        if (page.offsetHeight > limit) {
+            roadmap.remove();
+            page = newPdfPage(stage);
+            const s2 = c.cloneNode(false);
+            roadmap.style.marginTop = '0';
+            s2.appendChild(roadmap);
+            page.appendChild(s2);
+            pages.push(page);
+        }
     }
+
+    function showPdfBusy(on) {
+        let o = document.getElementById('pdf-busy');
+        if (on && !o) {
+            o = document.createElement('div');
+            o.id = 'pdf-busy';
+            o.className = 'no-print';
+            o.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(248,250,252,.97);display:flex;align-items:center;justify-content:center;font:600 14px Inter,sans-serif;color:#1e293b;';
+            o.innerHTML = '<div><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;color:#2563eb"></i>Đang dựng các trang A4 và tạo PDF…</div>';
+            document.body.appendChild(o);
+        } else if (!on && o) o.remove();
+    }
+
+    async function buildPdfDoc() {
+        if (!window.html2canvas || !window.jspdf) throw new Error('Chưa tải được thư viện tạo PDF (cần kết nối Internet)');
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        const prevScroll = window.scrollY;
+        showPdfBusy(true);
+        const stage = document.createElement('div');
+        const cs = getComputedStyle(document.getElementById('export-container'));
+        stage.style.cssText = `position:absolute;left:0;top:0;width:${PDF_CFG.renderW}px;z-index:9998;background:#fff;font-family:${cs.fontFamily};font-size:${cs.fontSize};color:#1e293b;`;
+        document.body.appendChild(stage);
+        const fix = document.createElement('style');
+        fix.textContent = 'img{display:inline-block !important}';
+        document.head.appendChild(fix);
+        try {
+            if (document.fonts && document.fonts.ready) await document.fonts.ready;
+            const pages = [];
+            Array.from(document.getElementById('export-container').children).forEach(sec => {
+                if (sec.querySelector('#strategy-map-box')) pages.push(buildMapPage(stage, sec));
+                else if (sec.querySelector('#kpi-table')) buildKpiPages(stage, sec, pages);
+                else { const p = newPdfPage(stage); p.appendChild(cleanClone(sec)); pages.push(p); }
+            });
+            window.scrollTo(0, 0);
+            await new Promise(r => requestAnimationFrame(() => setTimeout(r, 80)));
+            pages.forEach(p => p._arrows && p._arrows());
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+            const W = PDF_CFG.pageW - 2 * PDF_CFG.margin, H = PDF_CFG.pageH - 2 * PDF_CFG.margin - PDF_CFG.footer;
+            for (let i = 0; i < pages.length; i++) {
+                const pg = pages[i];
+                const canvas = await window.html2canvas(pg, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, scrollX: 0, scrollY: 0 });
+                const pw = pg.offsetWidth, ph = pg.offsetHeight;
+                let w = W, h = W * ph / pw;
+                if (h > H) { h = H; w = H * pw / ph; }
+                if (i > 0) pdf.addPage();
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', PDF_CFG.margin + (W - w) / 2, PDF_CFG.margin, w, h);
+                pdf.setFontSize(8);
+                pdf.setTextColor(148, 163, 184);
+                pdf.text(`Tamatra BSC 2027  |  Trang ${i + 1}/${pages.length}`, PDF_CFG.pageW - PDF_CFG.margin, PDF_CFG.pageH - 4, { align: 'right' });
+            }
+            return pdf;
+        } finally {
+            stage.remove();
+            fix.remove();
+            window.scrollTo(0, prevScroll);
+            showPdfBusy(false);
+        }
+    }
+
+    async function downloadPDF() {
+        try {
+            const pdf = await buildPdfDoc();
+            pdf.save('Tamatra_Ban_do_chien_luoc_BSC_2027.pdf');
+            showToast('Đã tải PDF thành công!');
+        } catch (err) {
+            console.error(err);
+            showToast('Không tạo được PDF: ' + (err.message || err), true);
+        }
+    }
+
+    async function printPDF() {
+        const win = window.open('', '_blank');
+        if (win) win.document.write('<meta charset="utf-8"><p style="font-family:sans-serif;padding:24px">Đang chuẩn bị bản in A4…</p>');
+        try {
+            const pdf = await buildPdfDoc();
+            pdf.autoPrint();
+            const url = pdf.output('bloburl');
+            if (win) win.location.href = url; else pdf.save('Tamatra_Ban_do_chien_luoc_BSC_2027.pdf');
+        } catch (err) {
+            console.error(err);
+            if (win) win.close();
+            showToast('Không tạo được bản in: ' + (err.message || err), true);
+        }
+    }
+
     let printPrev = false;
     window.addEventListener('beforeprint', () => { printPrev = showAllArrows; showAllArrows = true; drawCausalArrows(); });
     window.addEventListener('afterprint', () => { showAllArrows = printPrev; drawCausalArrows(activeHoveredNode); });
