@@ -22,6 +22,16 @@
         .causal-path { stroke: #94a3b8; stroke-width: 1.8; stroke-dasharray: 4 3; fill: none; transition: stroke 0.3s, stroke-width 0.3s; }
         .causal-path.active { stroke: #2563eb; stroke-width: 3.5; stroke-dasharray: none; filter: drop-shadow(0 2px 4px rgba(37,99,235,0.3)); }
         .node-flash { animation: nodeflash 1.2s ease-out; }
+
+        /* Thu gọn thanh công cụ */
+        #action-bar { transition: padding 0.2s; }
+        #action-bar.collapsed { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        #action-bar.collapsed #header-actions,
+        #action-bar.collapsed .header-subtitle { display: none; }
+        #action-bar.collapsed .header-logo { width: 2rem; height: 2rem; }
+        #action-bar.collapsed .header-logo i { font-size: 0.95rem; }
+        #action-bar.collapsed h1 { font-size: 0.95rem; }
+        #action-bar.collapsed #btn-toggle-header { top: 50%; transform: translateY(-50%); }
         @keyframes nodeflash { 0% { box-shadow: 0 0 0 4px rgba(16,185,129,.6); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
 
         @page { size: A4 landscape; margin: 8mm; }
@@ -38,21 +48,24 @@
 <body class="p-4 md:p-8">
 
     <!-- Action Bar -->
-    <header class="no-print sticky top-3 z-50 max-w-7xl mx-auto mb-6 bg-white/95 backdrop-blur shadow-lg rounded-2xl p-4 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+    <header id="action-bar" class="no-print sticky top-3 z-50 max-w-7xl mx-auto mb-6 bg-white/95 backdrop-blur shadow-lg rounded-2xl p-4 pr-14 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+        <button id="btn-toggle-header" onclick="toggleHeader()" class="absolute top-3 right-3 w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 flex items-center justify-center shadow-sm transition" title="Thu gọn thanh công cụ">
+            <i class="fa-solid fa-chevron-up text-xs"></i>
+        </button>
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30">
+            <div class="header-logo w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30">
                 <i class="fa-solid fa-sitemap text-xl"></i>
             </div>
             <div>
                 <h1 class="font-bold text-lg text-slate-800 leading-tight">Hệ Thống Bản Đồ Chiến Lược Tamatra 2027</h1>
-                <p class="text-xs text-slate-500 flex items-center gap-2">
+                <p class="header-subtitle text-xs text-slate-500 flex items-center gap-2">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Chế độ chỉnh sửa trực tiếp – Bảng KPI và Bản đồ tự đồng bộ hai chiều
                 </p>
             </div>
         </div>
 
-        <div class="flex items-center flex-wrap gap-2">
+        <div id="header-actions" class="flex items-center flex-wrap gap-2">
             <button onclick="syncKpiToStrategyMap()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition flex items-center gap-1.5 shadow-sm" title="Đối soát toàn bộ Từ điển KPI với các thẻ trên bản đồ">
                 <i class="fa-solid fa-arrows-rotate text-emerald-600"></i> Đồng bộ KPI ↔ Bản đồ
             </button>
@@ -1211,6 +1224,7 @@
         sortKpiTable();
         sortStrategyMap();
         afterChange();
+        makeAllTextEditable();
 
         if (!silent) {
             let msg = `Đã đồng bộ ${validCodes.size} chỉ tiêu giữa Từ điển KPI và Bản đồ.`;
@@ -1370,6 +1384,27 @@
         if (!svg || !box) return;
         renderArrows(box, svg, getNode, highlightNodeId, showAllArrows, 'm');
     }
+
+    // ===== Thu gọn / mở rộng thanh công cụ =====
+    function setHeaderCollapsed(collapsed) {
+        const bar = document.getElementById('action-bar');
+        const btn = document.getElementById('btn-toggle-header');
+        if (!bar || !btn) return;
+        bar.classList.toggle('collapsed', collapsed);
+        btn.innerHTML = collapsed ? '<i class="fa-solid fa-chevron-down text-xs"></i>' : '<i class="fa-solid fa-chevron-up text-xs"></i>';
+        btn.title = collapsed ? 'Mở rộng thanh công cụ' : 'Thu gọn thanh công cụ';
+        try { localStorage.setItem('tamatra_header_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+        if (typeof drawArrows === 'function') { try { drawArrows(); } catch (e) {} }
+    }
+    function toggleHeader() {
+        const bar = document.getElementById('action-bar');
+        setHeaderCollapsed(!(bar && bar.classList.contains('collapsed')));
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        let saved = null;
+        try { saved = localStorage.getItem('tamatra_header_collapsed'); } catch (e) {}
+        if (saved === '1') setHeaderCollapsed(true);
+    });
 
     function toggleArrowMode() {
         showAllArrows = !showAllArrows;
@@ -1639,6 +1674,34 @@
     function afterContentLoaded() {
         setupNodeHover();
         fullSync({ silent: true });
+    }
+
+    // ===== Cho phép sửa mọi chữ trên trang =====
+    // Bỏ qua: nút bấm, ô chọn, và các phần do hệ thống tự cập nhật (mã/trạng thái trên thẻ bản đồ, số đếm KPI)
+    const EDIT_SKIP = 'button,select,input,textarea,label,svg,script,style,[data-action],.no-print,#connector-canvas,'
+        + '.node-code-badge,.node-status-badge,.top-flag,#kpi-count,[contenteditable="false"]';
+    function hasOwnText(el) {
+        return Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim());
+    }
+    function makeAllTextEditable() {
+        const root = document.getElementById('export-container');
+        if (!root) return;
+        root.querySelectorAll('*').forEach(el => {
+            if (el.closest(EDIT_SKIP) || el.isContentEditable || !hasOwnText(el)) return;
+            const blocked = el.querySelector(EDIT_SKIP + ',[contenteditable]');
+            if (!blocked) {
+                el.setAttribute('contenteditable', 'true');
+                return;
+            }
+            // Phần tử chứa cả chữ lẫn phần không sửa được -> chỉ bọc riêng phần chữ
+            Array.from(el.childNodes).forEach(n => {
+                if (n.nodeType !== 3 || !n.textContent.trim()) return;
+                const span = document.createElement('span');
+                span.setAttribute('contenteditable', 'true');
+                n.replaceWith(span);
+                span.appendChild(n);
+            });
+        });
     }
 
     // Làm sạch nội dung trước khi đưa vào trang (file nạp vào có thể đến từ người khác)
